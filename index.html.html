@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adjustable Photo Frame Tool</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    canvas {
+      border: 2px solid #aaa;
+      border-radius: 10px;
+      cursor: grab;
+      background: #fff;
+    }
+    input, button {
+      margin: 10px;
+    }
+    footer {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>मैं भी जनसुराज</h2>
+  <input type="file" id="photoInput" accept="image/*" />
+  <br>
+  <label>Zoom:
+    <input type="range" id="zoomSlider" min="0.1" max="3" value="0.5" step="0.01" />
+  </label>
+  <br>
+  <button onclick="exportImage()">Export as JPG</button>
+  <br>
+
+  <canvas id="canvas" width="500" height="500"></canvas>
+
+  <footer>Thanks PPPS initiative</footer>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const frameImg = new Image();
+    frameImg.src = "PNG-baat-bihar-ki-profile-005-Frame.png";
+
+    let userImg = new Image();
+    let imgLoaded = false;
+
+    let zoom = 0.5;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let startX, startY;
+
+    frameImg.onload = drawCanvas;
+
+    document.getElementById("photoInput").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        userImg = new Image();
+        userImg.onload = () => {
+          imgLoaded = true;
+          offsetX = offsetY = 0;
+          zoom = 0.5;
+          document.getElementById("zoomSlider").value = 0.5;
+          drawCanvas();
+        };
+        userImg.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("zoomSlider").addEventListener("input", function () {
+      zoom = parseFloat(this.value);
+      drawCanvas();
+    });
+
+    canvas.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startX = e.offsetX - offsetX;
+      startY = e.offsetY - offsetY;
+      canvas.style.cursor = "grabbing";
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (isDragging) {
+        offsetX = e.offsetX - startX;
+        offsetY = e.offsetY - startY;
+        drawCanvas();
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      isDragging = false;
+      canvas.style.cursor = "grab";
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      isDragging = false;
+      canvas.style.cursor = "grab";
+    });
+
+    function drawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (imgLoaded) {
+        const imgW = userImg.width * zoom;
+        const imgH = userImg.height * zoom;
+        ctx.drawImage(userImg, offsetX, offsetY, imgW, imgH);
+      }
+      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    }
+
+    function exportImage() {
+      const link = document.createElement("a");
+      link.download = "framed_adjusted_photo.jpg";
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      link.click();
+    }
+  </script>
+
+</body>
+</html>
